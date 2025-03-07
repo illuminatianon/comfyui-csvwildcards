@@ -17,27 +17,43 @@ The node system provides two main ways to substitute text:
 1. Simple wildcards: `{filename}` or `{directory/filename}`
 2. CSV-based wildcards: `{csv:filename:column}` or `{csv:directory/filename:column}`
 
-### Simple Wildcards
+### Directory Organization
 
-For simple wildcards, create text files in the `data` directory. You can organize them in subdirectories of any depth:
+You can organize your wildcard files in the `data` directory using subdirectories of any depth:
 
 ```
 data/
-  animal.txt              # Direct file
-  monster.txt            # Direct file
-  monster/              # Directory
+  # Direct files in root
+  animal.txt              # Simple wildcard file
+  monster.txt            # Can coexist with directory of same name
+  monster.csv           # CSV file in root
+  
+  # Subdirectories
+  monster/              # Directory with same name as file above
     types.txt
     abilities.txt
-  pokemon/
+  
+  pokemon/              # Deep directory structure example
     gen1/
       types.txt
-      moves.txt
+      moves.csv
+      abilities.csv
     gen2/
       types.txt
-      moves.txt
+      moves.csv
 ```
 
-Each text file should contain one option per line. For example, `animal.txt`:
+Key points about directory structure:
+- Files can exist at any depth
+- Both .txt and .csv files can be organized in directories
+- A file and directory can share the same name (e.g., `monster.txt` and `monster/`)
+- When a name exists as both file and directory:
+  - Using `{name}` will use the file (e.g., `{monster}` uses `monster.txt`)
+  - Using `{name/file}` will look in the directory (e.g., `{monster/types}` uses `monster/types.txt`)
+
+### Simple Wildcards
+
+Simple wildcards use text files where each line is a possible value. For example, `animal.txt`:
 ```
 wolf
 dragon
@@ -45,31 +61,16 @@ bear
 tiger
 ```
 
-Use these in your template with various path styles:
+Use these in your templates:
 ```
 A {animal} with {texture} fur                     # Direct file reference
-A {monster} with {monster/abilities}              # Both file and directory with same name
-A {pokemon/gen1/types} Pokemon from Gen 1         # Deep directory structure
+A {monster} with {monster/abilities}              # File and directory reference
+A {pokemon/gen1/types} Pokemon                    # Deep path reference
 ```
-
-Note: When a name exists as both a file and directory (like `monster.txt` and `monster/` above), the direct file is used unless a path is explicitly specified.
 
 ### CSV Wildcards
 
-CSV wildcards allow you to maintain relationships between related terms. Create CSV files in the `data` directory, optionally organizing them in subdirectories of any depth:
-
-```
-data/
-  monster.csv
-  pokemon/
-    gen1/
-      moves.csv
-      abilities.csv
-    gen2/
-      moves.csv
-```
-
-Example `monster.csv`:
+CSV wildcards maintain relationships between related terms using CSV files with headers. Example `monster.csv`:
 ```csv
 color,size,texture
 red,large,scaly
@@ -78,13 +79,13 @@ green,medium,slimy
 purple,tiny,rough
 ```
 
-Use these in your template with various path styles:
+Use these in your templates:
 ```
 The {csv:monster:color} creature was {csv:monster:size}                              # Direct file reference
-A Pokemon with {csv:pokemon/gen1/moves:name} that causes {csv:pokemon/gen1/moves:effect}  # Deep directory path
+A Pokemon with {csv:pokemon/gen1/moves:name} that causes {csv:pokemon/gen1/moves:effect}  # Deep path reference
 ```
 
-Important: When using CSV wildcards, all references to the same CSV file in a single prompt will use values from the same row, maintaining consistency in your descriptions.
+Important: All references to the same CSV file in a single prompt will use values from the same row, maintaining consistency in your descriptions.
 
 ### Node Setup
 
@@ -94,19 +95,19 @@ Important: When using CSV wildcards, all references to the same CSV file in a si
 
 ### Example Templates
 
-Basic example:
+Basic wildcards:
 ```
 A {animal} with {texture} skin and {appendage} appendages
 ```
 
-CSV example with consistent attributes:
+CSV with relationships:
 ```
 The {csv:monster:color} {animal}-like monster has {csv:monster:size} {appendage} with a {csv:monster:texture} texture
 ```
 
-Directory structure example:
+Mixed directory usage:
 ```
-A {pokemon/types} Pokemon that knows {csv:pokemon/moves:name} which has {csv:pokemon/moves:power} power
+A {pokemon/gen1/types} Pokemon that knows {csv:pokemon/gen1/moves:name} which has {csv:pokemon/gen1/moves:power} power
 ```
 
 ## Tips
@@ -115,20 +116,8 @@ A {pokemon/types} Pokemon that knows {csv:pokemon/moves:name} which has {csv:pok
 2. Column names in CSV files are case-insensitive
 3. Spaces and special characters in column names are stripped
 4. Missing wildcards will remain unchanged in the output (useful for debugging)
-5. When using directories, use forward slashes (`/`) for path separation
+5. Always use forward slashes (`/`) for paths, even on Windows
 6. Directory paths can be of any depth (e.g., `{folder/subfolder/file}`)
-7. If both a file and directory exist with the same name (e.g., `monster.txt` and `monster/`):
-   - Using `{monster}` will use the file
-   - Using `{monster/something}` will look in the directory
-
-## File Organization
-
-Put your wildcard files in the `data` directory:
-- Text files (`.txt`) for simple wildcards
-- CSV files (`.csv`) for related term groups
-- Organize files in subdirectories of any depth
-- Use forward slashes (`/`) for directory paths in templates
-- You can have both a file and directory with the same name
 
 ## Error Handling
 
