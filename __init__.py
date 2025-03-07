@@ -23,6 +23,32 @@ class CSVWildcardNode:
     FUNCTION = "process_node"
     CATEGORY = "Custom"
 
+    def find_file(self, path_parts):
+        """
+        Smart file finder that handles both direct file matches and directory paths.
+        Returns tuple of (file_path, is_found) where file_path includes the .txt/.csv extension
+        """
+        # Join all parts with OS-specific separator
+        relative_path = os.path.join(*path_parts)
+        base_path = os.path.join(DATA_DIR, relative_path)
+        
+        # If this is a single part (no directories), check for direct file first
+        if len(path_parts) == 1:
+            direct_txt = base_path + ".txt"
+            if os.path.isfile(direct_txt):
+                return direct_txt, True
+        
+        # Check if path exists with .txt extension
+        txt_path = base_path + ".txt"
+        if os.path.isfile(txt_path):
+            return txt_path, True
+            
+        # For CSV files, check without extension as it will be added later
+        if os.path.isfile(base_path + ".csv"):
+            return base_path + ".csv", True
+            
+        return base_path, False
+
     def process_node(self, prompt_template):
         substitution_values = {}
 
@@ -34,63 +60,60 @@ class CSVWildcardNode:
         for ph in placeholders:
             if ph.startswith("csv:"):
                 parts = ph.split(":")
-                if len(parts) == 3:  # Standard CSV format: csv:file:column
-                    _, file_id, col_letter = parts
-                    if file_id not in csv_groups:
-                        csv_groups[file_id] = set()
-                    csv_groups[file_id].add(col_letter)
-                elif len(parts) == 4:  # Directory CSV format: csv:dir/file:column
-                    _, file_path, file_name, col_letter = parts
-                    full_path = os.path.join(file_path, file_name)
-                    if full_path not in csv_groups:
-                        csv_groups[full_path] = set()
-                    csv_groups[full_path].add(col_letter)
+                if len(parts) < 3:  # Need at least csv:file:column
+                    continue
+                    
+                # The middle part (between csv: and :column) is the path
+                path_str = parts[-2]  # Take second to last part
+                col_letter = parts[-1]  # Take last part
+                
+                # Split path into parts and clean
+                path_parts = [p for p in path_str.split("/") if p]
+                
+                # Find the actual file
+                file_path, found = self.find_file(path_parts)
+                if not found:
+                    continue
+                    
+                if file_path not in csv_groups:
+                    csv_groups[file_path] = set()
+                csv_groups[file_path].add(col_letter)
 
-        # First load all CSV files and select random rows - store in cache
+        # Load all CSV files and select random rows - store in cache
         csv_cache = {}
-        for file_id in csv_groups.keys():
-            # Handle both directory and non-directory paths
-            if '/' in file_id or '\\' in file_id:
-                csv_file_path = os.path.join(DATA_DIR, f"{file_id}.csv")
-            else:
-                csv_file_path = os.path.join(DATA_DIR, f"{file_id}.csv")
-            row_data = self.load_random_csv_row(csv_file_path)
-            csv_cache[file_id] = row_data  # May be empty dict if file not found.
+        for file_path in csv_groups.keys():
+            row_data = self.load_random_csv_row(file_path)
+            csv_cache[file_path] = row_data
 
-        # Now process all CSV placeholders using the cached rows
+        # Process all CSV placeholders using the cached rows
         for ph in placeholders:
             if ph.startswith("csv:"):
                 parts = ph.split(":")
-                if len(parts) == 3:  # Standard CSV format
-                    _, file_id, col_letter = parts
-                    if file_id in csv_cache and col_letter in csv_cache[file_id]:
-                        substitution_values[ph] = csv_cache[file_id][col_letter]
-                elif len(parts) == 4:  # Directory CSV format
-                    _, file_path, file_name, col_letter = parts
-                    full_path = os.path.join(file_path, file_name)
-                    if full_path in csv_cache and col_letter in csv_cache[full_path]:
-                        substitution_values[ph] = csv_cache[full_path][col_letter]
+                if len(parts) < 3:
+                    continue
+                    
+                path_str = parts[-2]
+                col_letter = parts[-1]
+                path_parts = [p for p in path_str.split("/") if p]
+                
+                file_path, found = self.find_file(path_parts)
+                if found and file_path in csv_cache and col_letter in csv_cache[file_path]:
+                    substitution_values[ph] = csv_cache[file_path][col_letter]
 
         # Process wildcard placeholders (those not starting with "csv:").
         for ph in placeholders:
             if ph.startswith("csv:"):
                 continue
                 
-            # Check if the placeholder contains a directory path
-            if '/' in ph or '\\' in ph:
-                # This is a directory path
-                file_path = os.path.join(DATA_DIR, f"{ph}.txt")
-            else:
-                # Try as directory first, then fallback to file
-                dir_path = os.path.join(DATA_DIR, ph)
-                if os.path.isdir(dir_path):
-                    # If it's a directory, we need a file specified with /
-                    continue
-                file_path = os.path.join(DATA_DIR, f"{ph}.txt")
+            # Split path into parts and clean
+            path_parts = [p for p in ph.split("/") if p]
             
-            value = self.get_random_line(file_path)
-            if value:
-                substitution_values[ph] = value
+            # Find the file
+            file_path, found = self.find_file(path_parts)
+            if found:
+                value = self.get_random_line(file_path)
+                if value:
+                    substitution_values[ph] = value
 
         # Use custom substitution instead of Python's format
         prompt = prompt_template
