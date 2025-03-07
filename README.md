@@ -93,7 +93,16 @@ Important: All references to the same CSV file in a single prompt will use value
 
 1. Add a `CSVWildcardNode` to your workflow
 2. Enter your prompt template in the text area
-3. Connect the output to any node that accepts a string input (like a CLIP Text Encode node)
+3. (Optional) Connect a seed value to control randomization
+4. Connect the output to any node that accepts a string input (like a CLIP Text Encode node)
+
+#### Inputs
+
+- **prompt_template** (required): The text template containing wildcards to be substituted
+- **seed** (optional): Integer value to control randomization
+  - If connected, the same seed will always produce the same substitutions
+  - If not connected, random values will be used each time
+  - Useful for reproducing specific results or batch processing
 
 ### Example Templates
 

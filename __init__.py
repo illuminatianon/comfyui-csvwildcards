@@ -16,6 +16,9 @@ class CSVWildcardNode:
                     "multiline": True,
                     "default": "The {csv:monster:color} {animal}-like monster has {csv:monster:size} {appendage} with a {csv:monster:texture} texture."
                 }),
+            },
+            "optional": {
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff})
             }
         }
 
@@ -49,7 +52,13 @@ class CSVWildcardNode:
             
         return base_path, False
 
-    def process_node(self, prompt_template):
+    def process_node(self, prompt_template, seed=None):
+        # Set up random seed if provided
+        if seed is not None:
+            rng = random.Random(seed)
+        else:
+            rng = random.Random()
+
         substitution_values = {}
 
         # First, extract all placeholders in the prompt.
@@ -82,7 +91,7 @@ class CSVWildcardNode:
         # Load all CSV files and select random rows - store in cache
         csv_cache = {}
         for file_path in csv_groups.keys():
-            row_data = self.load_random_csv_row(file_path)
+            row_data = self.load_random_csv_row(file_path, rng)
             csv_cache[file_path] = row_data
 
         # Process all CSV placeholders using the cached rows
@@ -106,12 +115,12 @@ class CSVWildcardNode:
                 continue
                 
             # Split path into parts and clean
-            path_parts = [p for p in ph.split("/") if p]
+            path_parts = [p for p in path_str.split("/") if p]
             
             # Find the file - for text lookups we want .txt files
             file_path, found = self.find_file(path_parts, is_csv_lookup=False)
             if found:
-                value = self.get_random_line(file_path)
+                value = self.get_random_line(file_path, rng)
                 if value:
                     substitution_values[ph] = value
 
@@ -123,7 +132,7 @@ class CSVWildcardNode:
         # For any remaining unsubstituted placeholders, leave them as is
         return (prompt,)
 
-    def load_random_csv_row(self, file_path):
+    def load_random_csv_row(self, file_path, rng=random):
         """
         Opens the CSV file at file_path, selects a random row, and returns a dictionary
         mapping column names from the header row to the corresponding cell values.
@@ -145,14 +154,14 @@ class CSVWildcardNode:
                     return {}
                 
                 # Select random row and create dictionary using header names
-                selected_row = random.choice(rows)
+                selected_row = rng.choice(rows)
                 return {header: value.strip() for header, value in zip(headers, selected_row)}
                 
         except Exception as e:
             print(f"Error reading CSV {file_path}: {str(e)}")
             return {}
 
-    def get_random_line(self, file_path):
+    def get_random_line(self, file_path, rng=random):
         """
         Opens a text file and returns a random non-empty line.
         """
@@ -160,7 +169,7 @@ class CSVWildcardNode:
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = [line.strip() for line in f if line.strip()]
             if lines:
-                return random.choice(lines)
+                return rng.choice(lines)
         except Exception:
             return ""
         return ""
