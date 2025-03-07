@@ -5,7 +5,7 @@ A ComfyUI custom node that provides dynamic text substitution using wildcards an
 ## Installation
 
 1. Navigate to your ComfyUI's custom_nodes directory
-2. Clone this repository: `git clone https://github.com/illuminatianon/csvwildcards.git`
+2. Clone this repository: `git clone https://github.com/illuminatianon/comfyui-csvwildcards.git`
 3. Restart ComfyUI
 
 ## Usage
