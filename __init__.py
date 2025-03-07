@@ -23,29 +23,29 @@ class CSVWildcardNode:
     FUNCTION = "process_node"
     CATEGORY = "Custom"
 
-    def find_file(self, path_parts):
+    def find_file(self, path_parts, is_csv_lookup=False):
         """
         Smart file finder that handles both direct file matches and directory paths.
-        Returns tuple of (file_path, is_found) where file_path includes the .txt/.csv extension
+        Returns tuple of (file_path, is_found) where file_path includes the .txt/.csv extension.
+        
+        Args:
+            path_parts: List of path components
+            is_csv_lookup: If True, prioritize .csv files, otherwise prioritize .txt files
         """
         # Join all parts with OS-specific separator
         relative_path = os.path.join(*path_parts)
         base_path = os.path.join(DATA_DIR, relative_path)
         
-        # If this is a single part (no directories), check for direct file first
-        if len(path_parts) == 1:
-            direct_txt = base_path + ".txt"
-            if os.path.isfile(direct_txt):
-                return direct_txt, True
-        
-        # Check if path exists with .txt extension
-        txt_path = base_path + ".txt"
-        if os.path.isfile(txt_path):
-            return txt_path, True
-            
-        # For CSV files, check without extension as it will be added later
-        if os.path.isfile(base_path + ".csv"):
-            return base_path + ".csv", True
+        if is_csv_lookup:
+            # For CSV lookups, only check .csv
+            csv_path = base_path + ".csv"
+            if os.path.isfile(csv_path):
+                return csv_path, True
+        else:
+            # For text lookups, only check .txt
+            txt_path = base_path + ".txt"
+            if os.path.isfile(txt_path):
+                return txt_path, True
             
         return base_path, False
 
@@ -70,8 +70,8 @@ class CSVWildcardNode:
                 # Split path into parts and clean
                 path_parts = [p for p in path_str.split("/") if p]
                 
-                # Find the actual file
-                file_path, found = self.find_file(path_parts)
+                # Find the actual file - for CSV lookups we want .csv files
+                file_path, found = self.find_file(path_parts, is_csv_lookup=True)
                 if not found:
                     continue
                     
@@ -96,7 +96,7 @@ class CSVWildcardNode:
                 col_letter = parts[-1]
                 path_parts = [p for p in path_str.split("/") if p]
                 
-                file_path, found = self.find_file(path_parts)
+                file_path, found = self.find_file(path_parts, is_csv_lookup=True)
                 if found and file_path in csv_cache and col_letter in csv_cache[file_path]:
                     substitution_values[ph] = csv_cache[file_path][col_letter]
 
@@ -108,8 +108,8 @@ class CSVWildcardNode:
             # Split path into parts and clean
             path_parts = [p for p in ph.split("/") if p]
             
-            # Find the file
-            file_path, found = self.find_file(path_parts)
+            # Find the file - for text lookups we want .txt files
+            file_path, found = self.find_file(path_parts, is_csv_lookup=False)
             if found:
                 value = self.get_random_line(file_path)
                 if value:

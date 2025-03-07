@@ -25,14 +25,11 @@ You can organize your wildcard files in the `data` directory using subdirectorie
 data/
   # Direct files in root
   animal.txt              # Simple wildcard file
-  monster.txt            # Can coexist with directory of same name
-  monster.csv           # CSV file in root
-  
-  # Subdirectories
-  monster/              # Directory with same name as file above
+  monster.txt            # Text wildcard file
+  monster.csv           # CSV wildcard file (can coexist with .txt)
+  monster/              # Directory with same name as files
     types.txt
     abilities.txt
-  
   pokemon/              # Deep directory structure example
     gen1/
       types.txt
@@ -46,10 +43,15 @@ data/
 Key points about directory structure:
 - Files can exist at any depth
 - Both .txt and .csv files can be organized in directories
-- A file and directory can share the same name (e.g., `monster.txt` and `monster/`)
-- When a name exists as both file and directory:
-  - Using `{name}` will use the file (e.g., `{monster}` uses `monster.txt`)
-  - Using `{name/file}` will look in the directory (e.g., `{monster/types}` uses `monster/types.txt`)
+- A name can be used for all three: .txt, .csv, and directory:
+  - `{name}` will use `name.txt` for simple wildcards
+  - `{csv:name:column}` will use `name.csv` for CSV wildcards
+  - `{name/file}` will look in the `name/` directory
+- All three can be used in the same prompt:
+  ```
+  The {monster} saw a {csv:monster:color} creature in {monster/types}
+  ```
+- Use forward slashes (`/`) for subdirectories, even on Windows
 
 ### Simple Wildcards
 
