@@ -1,0 +1,7 @@
+cat
+dog
+platypus
+mouse
+rat
+pig
+horse

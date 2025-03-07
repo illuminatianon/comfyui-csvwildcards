@@ -1,0 +1,7 @@
+wings
+shell
+claws
+fur
+carapace
+hair
+stinger
