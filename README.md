@@ -25,12 +25,12 @@ You can organize your wildcard files in the `data` directory using subdirectorie
 data/
   # Direct files in root
   animal.txt              # Simple wildcard file
-  monster.txt            # Text wildcard file
-  monster.csv           # CSV wildcard file (can coexist with .txt)
-  monster/              # Directory with same name as files
+  monster.txt             # CSV wildcard file (can coexist with .txt)
+  monster.csv
+  monster/
     types.txt
     abilities.txt
-  pokemon/              # Deep directory structure example
+  pokemon/
     gen1/
       types.txt
       moves.csv
