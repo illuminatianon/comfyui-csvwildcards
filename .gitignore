@@ -9,3 +9,5 @@ venv/
 *.log
 .DS_Store
 *.code-workspace
+data/*
+!data/.gitkeep

@@ -1,6 +1,0 @@
-happy
-sad
-excited
-tired
-lazy
-energetic
