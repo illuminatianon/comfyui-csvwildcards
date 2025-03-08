@@ -113,10 +113,13 @@ class CSVWildcardNode:
         for ph in placeholders:
             if ph.startswith("csv:"):
                 continue
-                
+
+            # Define path_str for non-CSV placeholders
+            path_str = ph
+
             # Split path into parts and clean
             path_parts = [p for p in path_str.split("/") if p]
-            
+
             # Find the file - for text lookups we want .txt files
             file_path, found = self.find_file(path_parts, is_csv_lookup=False)
             if found:
