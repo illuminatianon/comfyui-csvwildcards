@@ -9,6 +9,6 @@ Repository = "https://github.com/illuminatianon/comfyui-csvwildcards"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "illuminatianon"
 DisplayName = "comfyui-csvwildcards"
 Icon = ""
